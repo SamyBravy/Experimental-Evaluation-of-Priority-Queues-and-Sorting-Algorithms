@@ -1,0 +1,274 @@
+\documentclass[a4paper, 11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{siunitx}
+
+\geometry{a4paper, top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm}
+\graphicspath{{./}}
+
+\hypersetup{
+	colorlinks=true,
+	linkcolor=blue,
+	filecolor=magenta,	  
+	urlcolor=cyan,
+	pdftitle={Algorithms Laboratory Report},
+	pdfpagemode=FullScreen,
+}
+
+\title{Laboratorio di algoritmi \\ \large Comparative Analysis of Priority Queue Implementations}
+\author{Samuele Dell'Erba \\ Student ID: 7137648}
+\date{8 August 2025}
+
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+\newpage
+
+\tableofcontents
+\newpage
+
+\section{Introduction}
+The purpose of this report is to analyze and compare the performance of three different implementations of a max-priority queue (where the element with the highest priority is the one with the largest value). The data structures examined, as required by the assignment, are:
+\begin{itemize}
+	\item \textbf{Max Heap}: An almost complete binary tree, stored in an array, that satisfies the heap property (each node is greater than or equal to its children).
+	\item \textbf{Unsorted Linked List}: A simple linked list where new elements are inserted at the head, with no specific order.
+	\item \textbf{Sorted Linked List}: A linked list maintained in decreasing order, so that the highest-priority element is always at the head.
+\end{itemize}
+For each of these structures, the fundamental priority queue operations were implemented in Python: \texttt{insert}, \texttt{maximum}, \texttt{extract\_max}, and \texttt{increment\_key}. Subsequently, an experimental test campaign was conducted to measure the execution times of these operations as the structure size varies. The ultimate goal is to experimentally verify the theoretical computational complexity and determine the advantages and disadvantages of each approach in different usage scenarios.
+
+\section{Theoretical Description and Expected Performance}
+This section briefly describes the theoretical characteristics of each data structure and presents an a priori evaluation of the expected performance in terms of asymptotic complexity (Big-O notation).
+
+\subsection{Max Heap}
+A Max Heap is a tree data structure that allows efficient access to the maximum element. The operations are implemented as follows:
+\begin{itemize}
+	\item \textbf{Insert}: A new element is added at the end of the array (as the last leaf). To restore the heap property, the element "bubbles up" the tree (sift-up), swapping with its parent until it finds its correct position. This operation has complexity \textbf{O(log n)}.
+	\item \textbf{Maximum}: The maximum element is always the root of the tree (first element of the array). Access is therefore constant time, \textbf{O(1)}.
+	\item \textbf{Extract Max}: The root is removed. To fill the gap, the last element of the heap is moved to the root. To restore the property, this new element "bubbles down" the tree (sift-down or heapify), swapping with the larger child until the heap property is satisfied. The complexity is \textbf{O(log n)}.
+	\item \textbf{Increment Key}: The value of a node is increased. Since this may violate the heap property with respect to its parent, the node is bubbled up with a sift-up operation, similar to insertion. The complexity is \textbf{O(log n)}.
+\end{itemize}
+
+\subsection{Unsorted Linked List}
+This is the simplest implementation. No order is maintained.
+\begin{itemize}
+	\item \textbf{Insert}: A new element is inserted at the head of the list. This is a constant time operation, \textbf{O(1)}.
+	\item \textbf{Maximum}: To find the maximum element, the entire list must be traversed. The complexity is linear, \textbf{O(n)}.
+	\item \textbf{Extract Max}: Requires first finding the maximum (O(n)) and then removing it from the list. The total complexity remains \textbf{O(n)}.
+	\item \textbf{Increment Key}: Requires traversing the list to find the element at the specified index (average cost O(n)) and updating its value. The complexity is \textbf{O(n)}.
+\end{itemize}
+
+\subsection{Sorted Linked List}
+The list is maintained in decreasing order.
+\begin{itemize}
+	\item \textbf{Insert}: To insert a new element, the list must be traversed to find the correct position to maintain order. The complexity is \textbf{O(n)}.
+	\item \textbf{Maximum}: The maximum element is always the first in the list (the head). Access is constant time, \textbf{O(1)}.
+	\item \textbf{Extract Max}: Simply remove the head of the list. The operation is constant time, \textbf{O(1)}.
+	\item \textbf{Increment Key}: Requires finding the node (O(n)), removing it from its position, and reinserting it in the correct new position to maintain order (O(n)). The total complexity is \textbf{O(n)}.
+\end{itemize}
+
+\subsection{Summary Table of Expected Complexity}
+Table~\ref{tab:complexity} summarizes the expected computational complexities for each operation and each analyzed data structure.
+
+\begin{table}[H]
+	\centering
+	\caption{Theoretical computational complexity of priority queue operations for the different implementations.}
+	\label{tab:complexity}
+	\begin{tabular}{lccc}
+		\toprule
+		\textbf{Operation} & \textbf{Max Heap} & \textbf{Unsorted List} & \textbf{Sorted List} \\
+		\midrule
+		\texttt{insert} & $\mathcal{O}(\log n)$ & $\mathcal{O}(1)$ & $\mathcal{O}(n)$ \\
+		\texttt{maximum} & $\mathcal{O}(1)$ & $\mathcal{O}(n)$ & $\mathcal{O}(1)$ \\
+		\texttt{extract\_max} & $\mathcal{O}(\log n)$ & $\mathcal{O}(n)$ & $\mathcal{O}(1)$ \\
+		\texttt{increment\_key} & $\mathcal{O}(\log n)$ & $\mathcal{O}(n)$ & $\mathcal{O}(n)$ \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+
+\section{Experiment Description}
+
+\subsection{Test Environment}
+The experiments were conducted on the following environment:
+\begin{itemize}
+	\item \textbf{Hardware}: 12th Gen Intel(R) Core(TM) i7-1255U CPU, 16.0 GB RAM
+	\item \textbf{Operating System}: Windows 11 Home
+	\item \textbf{Software}: Python 3.10.13, Matplotlib 3.10.5
+\end{itemize}
+
+\subsection{Benchmark Methodology}
+For each data structure and each operation, the average execution time was measured as the input size varied. The methodology is as follows:
+\begin{enumerate}
+    \item A set of input sizes $N$ is defined: \{10, 50, 100, 500, 1000, 2500, 5000\}.
+    \item For each size $N$, the experiment is repeated $T=10$ times (trials) to obtain a stable average and reduce measurement noise.
+    \item In each trial, a data structure is first populated with $N$ random elements, sampled from an interval $[0, 10N]$.
+    \item Then, the execution times for the individual operations (\texttt{insert}, \texttt{maximum}, \texttt{extract\_max}, \texttt{increment\_key}) are measured using the \texttt{time.perf\_counter()} function, which provides a high-precision timer.
+    \item Between tests, the structure is restored to its original size to avoid influencing subsequent measurements.
+    \item The average results of the 10 trials are collected and used to generate graphs, one for each operation, comparing the three structures. All graphs are presented on a log-log scale (i.e., with a logarithmic scale on both the X and Y axes). This choice is crucial: without a logarithmic Y-axis, the execution times of O(n) operations would grow so large that the lines for O(1) and O(log n) operations would be "crushed" against the horizontal axis, making them indistinguishable. The log-log scale allows for a clearer comparison of the growth rates of the different operations.
+\end{enumerate}
+
+\section{Implemented Code Documentation}
+The code was developed in a single Python file. Four classes were defined:
+\begin{itemize}
+	\item \texttt{Node}: An auxiliary class to represent the nodes of the linked lists.
+	\item \texttt{MaxHeap}: Implements the priority queue using a heap. Uses a Python list as the underlying array.
+	\item \texttt{UnsortedLinkedList}: Implements the priority queue using an unsorted linked list.
+	\item \texttt{SortedLinkedList}: Implements the priority queue using a linked list maintained in decreasing order.
+\end{itemize}
+For the \texttt{extract\_max} operation of the unsorted list, an optimized implementation was chosen that finds the maximum node and its predecessor in a single pass, thus avoiding a double scan of the list. For the \texttt{increment\_key} operation of the sorted list, the node is removed from its position and reinserted using the \texttt{insert} function, ensuring correctness in a simple way, even though it is an O(n) operation.
+
+
+\section{Experimental Results and Critical Analysis}
+This section presents and analyzes the obtained results. For each operation, the comparative graph and a table with the average numerical data are shown. Times are expressed in seconds.
+
+\subsection{Insert Operation}
+The results for the insert operation are shown in Figure~\ref{fig:insert} and Table~\ref{tab:insert}.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{benchmark_insert.png}
+	\caption{Comparison of average times for the insert operation (\texttt{insert}) in log-log scale.}
+	\label{fig:insert}
+\end{figure}
+
+\begin{table}[H]
+	\centering
+	\sisetup{scientific-notation=true, round-mode=places, round-precision=2}
+	\caption{Average times (s) for the \texttt{insert} operation.}
+	\label{tab:insert}
+	\begin{tabular}{rSSS}
+		\toprule
+		\textbf{Size (N)} & {\textbf{Max Heap}} & {\textbf{Unsorted List}} & {\textbf{Sorted List}} \\
+		\midrule
+		10 & 1.73e-06 & 9.84e-07 & 1.83e-06 \\
+		50 & 4.34e-06 & 1.14e-06 & 1.95e-05 \\
+		100 & 4.47e-06 & 1.31e-06 & 1.05e-05 \\
+		500 & 4.35e-06 & 1.43e-06 & 2.36e-05 \\
+		1000 & 5.66e-06 & 4.79e-06 & 6.83e-05 \\
+		2500 & 6.85e-06 & 2.46e-06 & 2.85e-04 \\
+		5000 & 3.41e-06 & 3.26e-06 & 3.07e-04 \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\textbf{Analysis}: The experimental results fully confirm the theoretical predictions. The \textbf{Unsorted List} (orange line) shows an almost constant time, confirming its O(1) complexity and resulting as the fastest. The \textbf{Sorted List} (green line) shows a clear linear growth (a straight line in a log-log plot), confirming its O(n) inefficiency. The \textbf{Max Heap} (blue line) is in between, with very slow growth, typical of a logarithmic O(log n) trend.
+
+\subsection{Maximum Operation}
+The results for the maximum operation are shown in Figure~\ref{fig:maximum} and Table~\ref{tab:maximum}.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{benchmark_maximum.png}
+	\caption{Comparison of average times for the maximum operation (\texttt{maximum}) in log-log scale.}
+	\label{fig:maximum}
+\end{figure}
+
+\begin{table}[H]
+	\centering
+	\sisetup{scientific-notation=true, round-mode=places, round-precision=2}
+	\caption{Average times (s) for the \texttt{maximum} operation.}
+	\label{tab:maximum}
+	\begin{tabular}{rSSS}
+		\toprule
+		\textbf{Size (N)} & {\textbf{Max Heap}} & {\textbf{Unsorted List}} & {\textbf{Sorted List}} \\
+		\midrule
+		10 & 4.22e-07 & 1.36e-06 & 4.36e-07 \\
+		50 & 5.38e-07 & 5.40e-06 & 1.21e-06 \\
+		100 & 7.95e-07 & 9.20e-06 & 1.18e-06 \\
+		500 & 9.78e-07 & 4.25e-05 & 1.58e-06 \\
+		1000 & 1.15e-06 & 1.73e-04 & 1.60e-06 \\
+		2500 & 1.15e-06 & 2.03e-04 & 1.77e-06 \\
+		5000 & 1.14e-06 & 5.11e-04 & 1.54e-06 \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\textbf{Analysis}: Again, the experimental data are consistent with theory. The \textbf{Max Heap} and \textbf{Sorted List} (blue and green lines) are extremely fast, with low and constant execution times, confirming their O(1) complexity. The \textbf{Unsorted List} (orange line) is clearly the slowest and shows linear growth in execution time, in line with its O(n) complexity due to the need to scan the entire structure.
+
+
+\subsection{Extract Max Operation}
+The results for the extract max operation are shown in Figure~\ref{fig:extract_max} and Table~\ref{tab:extract_max}.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{benchmark_extract_max.png}
+	\caption{Comparison of average times for the extract max operation (\texttt{extract\_max}) in log-log scale.}
+	\label{fig:extract_max}
+\end{figure}
+
+\begin{table}[H]
+	\centering
+	\sisetup{scientific-notation=true, round-mode=places, round-precision=2}
+	\caption{Average times (s) for the \texttt{extract\_max} operation.}
+	\label{tab:extract_max}
+	\begin{tabular}{rSSS}
+		\toprule
+		\textbf{Size (N)} & {\textbf{Max Heap}} & {\textbf{Unsorted List}} & {\textbf{Sorted List}} \\
+		\midrule
+		10 & 3.39e-06 & 1.96e-06 & 6.86e-07 \\
+		50 & 7.23e-06 & 6.81e-06 & 1.38e-06 \\
+		100 & 8.81e-06 & 1.28e-05 & 1.24e-06 \\
+		500 & 1.84e-05 & 5.77e-05 & 1.27e-06 \\
+		1000 & 1.48e-05 & 2.83e-04 & 1.33e-06 \\
+		2500 & 2.62e-05 & 2.77e-04 & 1.16e-06 \\
+		5000 & 1.38e-05 & 5.74e-04 & 8.67e-07 \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\textbf{Analysis}: The \textbf{Sorted List} (green line) proves to be the most efficient, with a constant and very low execution time, as expected from its O(1) complexity. The \textbf{Unsorted List} (orange line) is again the slowest, with a linearly increasing time (O(n) complexity). The \textbf{Max Heap} (blue line) offers excellent performance, with very limited growth (O(log n)), making it a great alternative, much closer to the sorted list than to the unsorted one.
+
+\subsection{Increment Key Operation}
+The results for the increment key operation are shown in Figure~\ref{fig:increment_key} and Table~\ref{tab:increment_key}.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{benchmark_increment_key.png}
+	\caption{Comparison of average times for the increment key operation (\texttt{increment\_key}) in log-log scale.}
+	\label{fig:increment_key}
+\end{figure}
+
+\begin{table}[H]
+	\centering
+	\sisetup{scientific-notation=true, round-mode=places, round-precision=2}
+	\caption{Average times (s) for the \texttt{increment\_key} operation.}
+	\label{tab:increment_key}
+	\begin{tabular}{rSSS}
+		\toprule
+		\textbf{Size (N)} & {\textbf{Max Heap}} & {\textbf{Unsorted List}} & {\textbf{Sorted List}} \\
+		\midrule
+		10 & 1.71e-06 & 1.12e-06 & 4.86e-06 \\
+		50 & 1.83e-06 & 2.33e-06 & 1.23e-05 \\
+		100 & 1.17e-06 & 3.13e-06 & 2.87e-05 \\
+		500 & 1.41e-06 & 8.36e-06 & 5.81e-05 \\
+		1000 & 1.43e-06 & 3.74e-05 & 1.43e-04 \\
+		2500 & 2.37e-06 & 6.16e-05 & 3.54e-04 \\
+		5000 & 1.22e-06 & 1.21e-04 & 4.12e-04 \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\textbf{Analysis}: In this case, the \textbf{Max Heap} (blue line) is clearly superior to both list-based implementations. Its execution time remains almost constant, reflecting its efficient O(log n) complexity. Both the \textbf{Sorted List} and the \textbf{Unsorted List} (green and orange lines) show a linear O(n) trend, as both require a scan to find the element to modify.
+
+\section{Conclusions}
+The experimental analysis unequivocally confirmed the theoretical predictions about the complexity of the different priority queue implementations. The results clearly show that there is no single "best" data structure, but the optimal choice strongly depends on the usage profile, i.e., the relative frequency of the different operations.
+
+\begin{itemize}
+	\item The \textbf{Max Heap} proved to be the most versatile and balanced implementation. It offers excellent performance (logarithmic or constant) for all analyzed operations, making it the ideal default choice for a generic priority queue.
+	\item The \textbf{Unsorted Linked List} excels only in the insert operation (O(1)), but pays a very high price in terms of performance for all operations that require access to the maximum element (O(n)). Its use is therefore limited to scenarios where almost exclusively insertions are performed.
+	\item The \textbf{Sorted Linked List} offers unbeatable performance for access and extraction of the maximum (O(1)), but is penalized by a very slow insert operation (O(n)). It is suitable for applications where the queue is rarely built but very frequently queried for the highest-priority element.
+\end{itemize}
+
+In conclusion, the analysis reinforced the understanding of the intrinsic trade-offs in data structure design, demonstrating how both theoretical and experimental analysis are fundamental for making informed implementation choices.
+
+\end{document}

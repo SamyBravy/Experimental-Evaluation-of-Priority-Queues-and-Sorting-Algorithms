@@ -14,6 +14,8 @@ The project is divided into two main studies:
     -   **Sorted Linked List**
 2.  **Sorting Algorithms**: Comparative analysis of Insertion Sort and Bucket Sort.
 
+> 📄 **Note**: A detailed experimental report is available in **[PriorityQueue Relazione.pdf](Priority%20Queues/PriorityQueue%20Relazione.pdf)** (LaTeX source included).
+
 ## 📂 Contents
 
 ### 1. Priority Queues

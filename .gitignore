@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints/
+
+# LaTeX
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.pdf
+!Slides.pdf
+!Priority Queues/PriorityQueue Relazione.pdf
+
+# OS
+.DS_Store
+Thumbs.db
